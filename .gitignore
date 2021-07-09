@@ -1,5 +1,6 @@
 *.o
 *.bin
 __build
+build
 TASKS
 .vscode
