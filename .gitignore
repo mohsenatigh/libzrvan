@@ -1,0 +1,5 @@
+*.o
+*.bin
+__build
+TASKS
+.vscode

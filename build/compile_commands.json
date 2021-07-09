@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/root/projects/libzrvan/build/test/unittest",
+  "command": "/bin/x86_64-linux-gnu-g++-9    -Wall -Wextra -g   -std=gnu++17 -o CMakeFiles/unittest.bin.dir/main.cpp.o -c /root/projects/libzrvan/test/unittest/main.cpp",
+  "file": "/root/projects/libzrvan/test/unittest/main.cpp"
+}
+]

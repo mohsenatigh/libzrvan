@@ -1,0 +1,5 @@
+/root/projects/libzrvan/build/CMakeFiles/rebuild_cache.dir
+/root/projects/libzrvan/build/CMakeFiles/edit_cache.dir
+/root/projects/libzrvan/build/test/unittest/CMakeFiles/rebuild_cache.dir
+/root/projects/libzrvan/build/test/unittest/CMakeFiles/edit_cache.dir
+/root/projects/libzrvan/build/test/unittest/CMakeFiles/unittest.bin.dir
