@@ -12,20 +12,6 @@ These components are only tested and developed, and tuned for the Linux environm
 As it is a header-only library, there is not any particular process for building it. In case that you want to run the unit tests, you need to follow the following instructions.
 
     git clone https://github.com/mohsenatigh/libzrvan
-# libzrvan
-Libzervan is a set of header-only c++ components developed and customized for high-performance, high-throughput computing. 
-
-## Dependency
-There is no particular dependency for you using this library (except std c++). for building and running the tests, you need google-test library (gtest) and Cmake
-
-## Operation system and CPU
-
-These components are only tested and developed, and tuned for the Linux environment and Intel CPUs. For other operating systems or other CPU architectures (AMD, for example), the results may differ.
-
-## Build 
-As it is a header-only library, there is not any particular process for building it. In case that you want to run the unit tests, you need to follow the following instructions.
-
-    git clone https://github.com/mohsenatigh/libzrvan
     cd libzrvan
     mkdir __build
     cd __build
@@ -44,7 +30,7 @@ Implementation of core hash algorithm. used to decrease the collision chance in 
 
 Implementation of the Fast hash algorithm. It could be used as a replacement for the std::hash function. In most implementations, std::hash uses MurmurHash. Fast hash is a competitor algorithm that pos better performance. please note that for std based data structures, using this hash algorithm is not recommended.
 
-![alt text](https://github.com/mohsenatigh/libzrvan/charts/FastHash.png)
+![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/FastHash.png)
 
 ### Counter
 
@@ -55,7 +41,7 @@ Operation systems usually use per CPU counters for tracking these types of metri
 
 The following graph compares the performance of per-thread counters with atomic variables. for more details, please check the related unit test     
 
-![alt text](https://github.com/mohsenatigh/libzrvan/charts/Counter.png)
+![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/Counter.png)
 
 ### Locks
 
