@@ -8,7 +8,7 @@ namespace utils {
 
 /**
  * @brief Simple spinlock implementation using std::atomic. in low contention situations this lock act as a simple spinlock but in highly contention
- * systems it acts as a mutex . When it is acting as a mutex the performance is highly dependent to the OS scheduling algorithm and timer
+ * systems it acts as a sleeping mutex . When it is acting as a sleeping mutex the performance is highly dependent to the OS scheduling algorithm and timer
  *
  * @tparam MaxLoopBeforeSleep
  */

@@ -1,12 +1,12 @@
 #pragma once
-#include <gtest/gtest.h>
-#include <stdio.h>
-#include <mutex>
-#include <shared_mutex>
-#include <thread>
-#include <vector>
 #include "../../../include/utils/RWSpinLock.hpp"
 #include "../../../include/utils/SpinLock.hpp"
+#include <gtest/gtest.h>
+#include <mutex>
+#include <shared_mutex>
+#include <stdio.h>
+#include <thread>
+#include <vector>
 //---------------------------------------------------------------------------------------
 TEST(utils, spinlock_test_functionality) {
   libzrvan::utils::SpinLock<> lock;
@@ -34,18 +34,16 @@ TEST(utils, rwlock_test_functionality) {
   EXPECT_EQ(lock.try_lock_shared(), true);
   lock.unlock_shared();
   lock.unlock_shared();
-
 }
 //---------------------------------------------------------------------------------------
-template <typename LOCKTYPE>
-void testWriteLock() {
+template <typename LOCKTYPE> void testWriteLockThreads(uint32_t threadCount) {
   uint64_t counter = 0;
-  static const uint64_t threadCount = 64;
   static const uint64_t loopCount = 128000;
-  static const uint64_t target = (threadCount * loopCount);
+  uint64_t target = (threadCount * loopCount);
   std::vector<std::thread> threads;
   LOCKTYPE lock;
 
+  auto start = std::chrono::high_resolution_clock::now();
   auto threadRt = [&]() {
     for (uint64_t i = 0; i < loopCount; i++) {
       lock.lock();
@@ -58,24 +56,31 @@ void testWriteLock() {
     threads.emplace_back(std::thread(threadRt));
   }
 
-  for (auto& t : threads) {
+  for (auto &t : threads) {
     t.join();
   }
+  auto end = std::chrono::high_resolution_clock::now();
+
+  std::cout << threadCount << ","
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     start)
+                   .count()
+            << std::endl;
 
   EXPECT_EQ(counter, target);
 }
+
 //---------------------------------------------------------------------------------------
-template <typename LOCKTYPE>
-void testRWLock() {
-  uint64_t counter = 0;
-  static const uint64_t readThreadCount = 64;
-  static const uint64_t writeThreadCount = 8;
+template <typename LOCKTYPE> void testRWLockThreads(uint32_t threadCount) {
   static const uint64_t loopCount = 128000;
-  static const uint64_t target = (writeThreadCount * loopCount);
+  uint64_t counter = 0;
+  uint64_t readThreadCount = threadCount * 2;
+  uint64_t writeThreadCount = threadCount;
+  uint64_t target = (writeThreadCount * loopCount);
   std::vector<std::thread> threads;
   LOCKTYPE lock;
 
-  //read thread
+  // read thread
   auto threadR = [&]() {
     uint32_t val = 0;
     while (true) {
@@ -88,7 +93,7 @@ void testRWLock() {
     }
   };
 
-  //write thread
+  // write thread
   auto threadW = [&]() {
     for (uint64_t i = 0; i < loopCount; i++) {
       lock.lock();
@@ -106,18 +111,38 @@ void testRWLock() {
     threads.emplace_back(std::thread(threadR));
   }
 
-  for (auto& t : threads) {
+  for (auto &t : threads) {
     t.join();
   }
 
   EXPECT_EQ(counter, target);
 }
 //---------------------------------------------------------------------------------------
-TEST(utils, rwlock_test_read_write_performance_rw_spin_lock) { testRWLock<libzrvan::utils::RWSpinLock<>>(); }
+const static auto lockThreads_ = {1, 2, 4, 8, 12, 16, 32, 64};
+
+template <typename LOCKTYPE> void testWriteLock() {
+  for (auto i : lockThreads_) {
+    testWriteLockThreads<LOCKTYPE>(i);
+  }
+}
 //---------------------------------------------------------------------------------------
-TEST(utils, wlock_test_write_performance_std_shared_mutex) { testWriteLock<std::shared_mutex>(); }
+template <typename LOCKTYPE> void testRWLock() {
+  for (auto i : lockThreads_) {
+    testRWLockThreads<LOCKTYPE>(i);
+  }
+}
 //---------------------------------------------------------------------------------------
-TEST(utils, wlock_test_write_performance_std_mutex) { testWriteLock<std::mutex>(); }
+TEST(utils, rwlock_test_read_write_performance_rw_spin_lock) {
+  testRWLock<libzrvan::utils::RWSpinLock<>>();
+}
+//---------------------------------------------------------------------------------------
+TEST(utils, rwlock_test_write_performance_std_shared_mutex) {
+  testRWLock<std::shared_mutex>();
+}
+//---------------------------------------------------------------------------------------
+TEST(utils, wlock_test_write_performance_std_mutex) {
+  testWriteLock<std::mutex>();
+}
 //---------------------------------------------------------------------------------------
 struct pthreadMutexWraper {
   pthread_mutex_t lock_;
@@ -126,11 +151,17 @@ struct pthreadMutexWraper {
   void unlock() { pthread_mutex_unlock(&lock_); }
 };
 
-TEST(utils, wlock_test_write_performance_PthreadMutex) { testWriteLock<pthreadMutexWraper>(); }
+TEST(utils, wlock_test_write_performance_PthreadMutex) {
+  testWriteLock<pthreadMutexWraper>();
+}
 //---------------------------------------------------------------------------------------
-TEST(utils, wlock_test_write_performance_SpinLock) { testWriteLock<libzrvan::utils::SpinLock<>>(); }
+TEST(utils, wlock_test_write_performance_SpinLock) {
+  testWriteLock<libzrvan::utils::SpinLock<>>();
+}
 //---------------------------------------------------------------------------------------
-TEST(utils, wlock_test_write_performance_RWSpinLock) { testWriteLock<libzrvan::utils::RWSpinLock<>>(); }
+TEST(utils, wlock_test_write_performance_RWSpinLock) {
+  testWriteLock<libzrvan::utils::RWSpinLock<>>();
+}
 //---------------------------------------------------------------------------------------
 struct pthreadSpinLockWraper {
   pthread_spinlock_t lock_;
@@ -139,7 +170,9 @@ struct pthreadSpinLockWraper {
   void unlock() { pthread_spin_unlock(&lock_); }
 };
 
-TEST(utils, wlock_test_write_performance_PthreadSpinLock) { testWriteLock<pthreadSpinLockWraper>(); }
+TEST(utils, wlock_test_write_performance_PthreadSpinLock) {
+  testWriteLock<pthreadSpinLockWraper>();
+}
 //---------------------------------------------------------------------------------------
 struct pthreadRWLockWraper {
   pthread_rwlock_t lock_;
@@ -148,5 +181,7 @@ struct pthreadRWLockWraper {
   void unlock() { pthread_rwlock_unlock(&lock_); }
 };
 
-TEST(utils, wlock_test_write_performance_PthreadRWLock) { testWriteLock<pthreadRWLockWraper>(); }
+TEST(utils, wlock_test_write_performance_PthreadRWLock) {
+  testWriteLock<pthreadRWLockWraper>();
+}
 //---------------------------------------------------------------------------------------

@@ -1,31 +1,55 @@
 #pragma once
-#include <gtest/gtest.h>
-#include <chrono>
-#include <string>
 #include "../../../include/utils/FastHash.hpp"
+#include "../../../include/utils/Utils.hpp"
+#include <chrono>
+#include <gtest/gtest.h>
+#include <string>
+#include <unordered_set>
+#include <vector>
 //---------------------------------------------------------------------------------------
-static const std::string input_(16, 'a');
-static const uint32_t loopCount_ = 10000000;
-//---------------------------------------------------------------------------------------
-TEST(utils, fasthash_test_performance64) {
-  std::cout << "loop count " << loopCount_ << " string len " << input_.size() << std::endl;
 
-  // disable optimization
+template <class HASH> void testWithHash(const std::string &input) {
   uint64_t sum = 0;
+  static const uint32_t loopCount = 1000000;
 
-  // check performance
-  for (uint32_t i = 0; i < loopCount_; i++) {
-    sum += libzrvan::utils::FastHash::hash64(reinterpret_cast<const uint8_t*>(input_.data()), input_.size());
+  HASH h;
+
+  auto start = std::chrono::high_resolution_clock::now();
+  for (uint32_t i = 0; i < loopCount; i++) {
+    sum += h(input);
   }
-  std::cout << sum << "\n";
+  auto end = std::chrono::high_resolution_clock::now();
+
+  std::cout << input.size() << ","
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     start)
+                   .count()
+            << "," << sum << std::endl;
+
+  return;
 }
 //---------------------------------------------------------------------------------------
-TEST(utils, fasthash_test_std_hash_performance) {
-  std::hash<std::string> h;
-  uint32_t sum = 0;
-  for (uint32_t i = 0; i < loopCount_; i++) {
-    sum += h(input_);
+template <class HASH> void testAllStrings() {
+  auto inputs = {
+      std::string(4, 'a'),  std::string(6, 'a'),   std::string(8, 'a'),
+      std::string(10, 'a'), std::string(12, 'a'),  std::string(16, 'a'),
+      std::string(20, 'a'), std::string(32, 'a'),  std::string(40, 'a'),
+      std::string(64, 'a'), std::string(128, 'a'), std::string(256, 'a'),
+  };
+
+  std::cout << "string len,time(Micro second),sum" << std::endl;
+
+  for (auto &a : inputs) {
+    testWithHash<HASH>(a);
   }
-  std::cout << sum << "\n";
+}
+
+//---------------------------------------------------------------------------------------
+TEST(utils, fasthash_test_performance64) {
+  testAllStrings<libzrvan::utils::FastHash<std::string>>();
+}
+//---------------------------------------------------------------------------------------
+TEST(utils, stdhash_test_performance) {
+  testAllStrings<std::hash<std::string>>();
 }
 //---------------------------------------------------------------------------------------

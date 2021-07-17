@@ -1,7 +1,7 @@
 #pragma once
-#include <gtest/gtest.h>
-#include <chrono>
 #include "../../../include/ds/ExpMap.hpp"
+#include <chrono>
+#include <gtest/gtest.h>
 //---------------------------------------------------------------------------------------
 struct testObjectMap {
   uint64_t p1;
@@ -28,7 +28,9 @@ TEST(ds, exp_map_test) {
   add();
 
   for (uint64_t i = 0; i < testCount; i++) {
-    EXPECT_EQ(map.findR(i, [&](testObjectMap& obj) -> bool { return obj.p1 == i; }), true);
+    EXPECT_EQ(
+        map.findR(i, [&](testObjectMap &obj) -> bool { return obj.p1 == i; }),
+        true);
     EXPECT_EQ(map.findW(i), true);
   }
 
@@ -80,41 +82,45 @@ TEST(ds, exp_map_test) {
 }
 
 //---------------------------------------------------------------------------------------
-static void runMapTest(const std::string& info, std::function<void(uint32_t tid)> func, uint32_t tCount) {
+static void runMapTest(const std::string &info,
+                       std::function<void(uint32_t tid)> func,
+                       uint32_t tCount) {
   std::vector<std::thread> threads;
   auto start = std::chrono::high_resolution_clock::now();
   for (uint32_t i = 0; i < tCount; i++) {
     threads.emplace_back(func, i);
   }
-  for (auto& t : threads) {
+  for (auto &t : threads) {
     t.join();
   }
   auto end = std::chrono::high_resolution_clock::now();
 
-  std::cout << info << " thread count " << tCount << " duration is " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+  std::cout << info << " thread count " << tCount << " duration is "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                     start)
+                   .count()
             << std::endl;
 }
 //---------------------------------------------------------------------------------------
 static constexpr uint32_t testObjectsCount_ = 100000;
 //---------------------------------------------------------------------------------------
-template <class K>
-void fillMapTestObjects(std::vector<K>& vec) {
+template <class K> void fillMapTestObjects(std::vector<K> &vec) {
   for (uint64_t i = 0; i < testObjectsCount_; i++) {
     vec.emplace_back(random() * i);
   }
 }
 //---------------------------------------------------------------------------------------
 template <>
-void fillMapTestObjects<std::string>(std::vector<std::string>& vec) {
+void fillMapTestObjects<std::string>(std::vector<std::string> &vec) {
   for (uint64_t i = 0; i < testObjectsCount_; i++) {
     vec.emplace_back("item-" + std::to_string(random() * i));
   }
 }
 //---------------------------------------------------------------------------------------
-template <class K, uint32_t TCOUNT>
-void testExpList(const std::string& comment) {
+template <class K, uint32_t TCOUNT, class HASH>
+void testExpList(const std::string &comment) {
   std::vector<K> testObjects[TCOUNT];
-  libzrvan::ds::ExpMap<K, testObjectMap> map;
+  libzrvan::ds::ExpMap<K, testObjectMap, HASH> map;
 
   // fill test objects
   for (uint32_t i = 0; i < TCOUNT; i++) {
@@ -157,15 +163,22 @@ void testExpList(const std::string& comment) {
     }
   };
 
-  runMapTest("test exp map insert performance (" + comment + ")", fillFunc, TCOUNT);
-  runMapTest("test exp map read performance (" + comment + ")", searchFuncRead, TCOUNT);
-  runMapTest("test exp map write performance (" + comment + ")", searchFuncWrite, TCOUNT);
+  runMapTest("test exp map insert performance (" + comment + ")", fillFunc,
+             TCOUNT);
+  runMapTest("test exp map read performance (" + comment + ")", searchFuncRead,
+             TCOUNT);
+  runMapTest("test exp map write performance (" + comment + ")",
+             searchFuncWrite, TCOUNT);
 }
 //---------------------------------------------------------------------------------------
 TEST(ds, exp_map_test_performance) {
-#define __TEST_EXP_MAP_WITH_T(TCOUNT)      \
-  testExpList<uint64_t, TCOUNT>("uint64"); \
-  testExpList<std::string, TCOUNT>("string");\
+#define __TEST_EXP_MAP_WITH_T(TCOUNT)                                          \
+  testExpList<uint64_t, TCOUNT, std::hash<uint64_t>>("uint64-stdhash");        \
+  testExpList<std::string, TCOUNT, std::hash<std::string>>("string-stdhash");  \
+  testExpList<uint64_t, TCOUNT, libzrvan::utils::FastHash<uint64_t>>(          \
+      "uint64-fasthash");                                                      \
+  testExpList<std::string, TCOUNT, libzrvan::utils::FastHash<std::string>>(    \
+      "string-fasthash");                                                      \
   std::cout << std::endl;
 
   __TEST_EXP_MAP_WITH_T(1)
@@ -173,11 +186,10 @@ TEST(ds, exp_map_test_performance) {
   __TEST_EXP_MAP_WITH_T(4)
   __TEST_EXP_MAP_WITH_T(8)
   __TEST_EXP_MAP_WITH_T(12)
-  
 }
 //---------------------------------------------------------------------------------------
 template <class K, class KEYTYPE, uint32_t TCOUNT>
-void testUnorderedMap(const std::string& comment) {
+void testUnorderedMap(const std::string &comment) {
   std::vector<K> testObjects[TCOUNT];
   std::unordered_map<K, testObjectMap> map;
   KEYTYPE lock;
@@ -227,24 +239,31 @@ void testUnorderedMap(const std::string& comment) {
     }
   };
 
-  runMapTest("test unordered map insert performance (" + comment + ")", fillFunc, TCOUNT);
-  runMapTest("test unordered map read performance (" + comment + ")", searchFuncRead, TCOUNT);
-  runMapTest("test unordered map write performance (" + comment + ")", searchFuncWrite, TCOUNT);
+  runMapTest("test unordered map insert performance (" + comment + ")",
+             fillFunc, TCOUNT);
+  runMapTest("test unordered map read performance (" + comment + ")",
+             searchFuncRead, TCOUNT);
+  runMapTest("test unordered map write performance (" + comment + ")",
+             searchFuncWrite, TCOUNT);
 }
 //---------------------------------------------------------------------------------------
 TEST(ds, exp_map_test_unordered_map_performance) {
-#define __TEST_MAP_WITH_T(TCOUNT)                                                                                    \
-  testUnorderedMap<uint64_t, std::shared_mutex, TCOUNT>("uint64_t with std::shared_mutex");                          \
-  testUnorderedMap<uint64_t, std::shared_mutex, TCOUNT>("string with std::shared_mutex");                            \
-  std::cout << std::endl;                                                                                            \
-  testUnorderedMap<std::string, libzrvan::utils::RWSpinLock<>, TCOUNT>("uint64_t with libzrvan::utils::RWSpinLock"); \
-  testUnorderedMap<std::string, libzrvan::utils::RWSpinLock<>, TCOUNT>("string with libzrvan::utils::RWSpinLock"); \
+#define __TEST_MAP_WITH_T(TCOUNT)                                              \
+  testUnorderedMap<uint64_t, std::shared_mutex, TCOUNT>(                       \
+      "uint64_t with std::shared_mutex");                                      \
+  testUnorderedMap<uint64_t, std::shared_mutex, TCOUNT>(                       \
+      "string with std::shared_mutex");                                        \
+  std::cout << std::endl;                                                      \
+  testUnorderedMap<std::string, libzrvan::utils::RWSpinLock<>, TCOUNT>(        \
+      "uint64_t with libzrvan::utils::RWSpinLock");                            \
+  testUnorderedMap<std::string, libzrvan::utils::RWSpinLock<>, TCOUNT>(        \
+      "string with libzrvan::utils::RWSpinLock");                              \
   std::cout << std::endl;
 
   __TEST_MAP_WITH_T(1)
   __TEST_MAP_WITH_T(2)
   __TEST_MAP_WITH_T(4)
   __TEST_MAP_WITH_T(12)
-  
+
 #undef __TEST_MAP_WITH_T
 }

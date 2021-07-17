@@ -1,15 +1,16 @@
 #pragma once
 
+#include "CoreHash.hpp"
 #include <cstdint>
 namespace libzrvan {
 namespace utils {
 
 /**
- * @brief implimentation of the Fast hash algorithm.
+ * @brief implementation of the Fast hash algorithm.
  *
  */
-class FastHash {
- private:
+class FastHashCore {
+private:
   //-------------------------------------------------------------------------------------
   template <uint64_t seed>
   static uint64_t fasthash(const uint8_t *buf, std::size_t len) {
@@ -38,29 +39,29 @@ class FastHash {
     pos2 = reinterpret_cast<const uint8_t *>(pos);
     v = 0;
     switch (len & 7) {
-      case 7:
-        v ^= (uint64_t)pos2[6] << 48;
-        break;
-      case 6:
-        v ^= (uint64_t)pos2[5] << 40;
-        break;
-      case 5:
-        v ^= (uint64_t)pos2[4] << 32;
-        break;
-      case 4:
-        v ^= (uint64_t)pos2[3] << 24;
-        break;
-      case 3:
-        v ^= (uint64_t)pos2[2] << 16;
-        break;
-      case 2:
-        v ^= (uint64_t)pos2[1] << 8;
-        break;
-      case 1:
-        v ^= (uint64_t)pos2[0];
-        break;
-      default:
-        return h;
+    case 7:
+      v ^= (uint64_t)pos2[6] << 48;
+      break;
+    case 6:
+      v ^= (uint64_t)pos2[5] << 40;
+      break;
+    case 5:
+      v ^= (uint64_t)pos2[4] << 32;
+      break;
+    case 4:
+      v ^= (uint64_t)pos2[3] << 24;
+      break;
+    case 3:
+      v ^= (uint64_t)pos2[2] << 16;
+      break;
+    case 2:
+      v ^= (uint64_t)pos2[1] << 8;
+      break;
+    case 1:
+      v ^= (uint64_t)pos2[0];
+      break;
+    default:
+      return h;
     }
 
     h ^= mix(v);
@@ -68,7 +69,7 @@ class FastHash {
     return mix(h);
   }
 
- public:
+public:
   //-------------------------------------------------------------------------------------
   /**
    * @brief
@@ -77,7 +78,9 @@ class FastHash {
    * @param len  Input length
    * @return uint64_t
    */
-  static uint64_t hash64(const uint8_t *buffer, std::size_t len) { return fasthash<0xcbf29ce484222325>(buffer, len); }
+  static uint64_t hash64(const uint8_t *buffer, std::size_t len) {
+    return fasthash<0xcbf29ce484222325>(buffer, len);
+  }
   //-------------------------------------------------------------------------------------
   /**
    * @brief
@@ -92,5 +95,31 @@ class FastHash {
   }
 };
 
-}  // namespace utils
-}  // namespace libzrvan
+//--------------------------------------------------------------------------------------
+/**
+ * @brief
+ *
+ * @tparam T
+ */
+template <class T> class FastHash {
+public:
+  size_t operator()(const T &in) const {
+    return reinterpret_cast<uint64_t>(in);
+  }
+};
+//--------------------------------------------------------------------------------------
+/**
+ * @brief
+ *
+ * @tparam
+ */
+template <> class FastHash<std::string> {
+public:
+  size_t operator()(const std::string &in) const {
+
+    return FastHashCore::hash64(reinterpret_cast<const uint8_t *>(in.data()),
+                                in.size());
+  }
+};
+} // namespace utils
+} // namespace libzrvan

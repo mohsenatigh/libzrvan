@@ -11,28 +11,6 @@ namespace ds {
 
 //---------------------------------------------------------------------------------------
 /**
- * @brief Hash generation class for numeric values
- *
- * @tparam K
- */
-template <class K>
-class ExpMapKey {
- public:
-  static uint64_t getKey(const K& k) { return libzrvan::utils::CoreHash::hash(static_cast<uint64_t>(k)); }
-};
-//---------------------------------------------------------------------------------------
-/**
- * @brief Hash generation class for string values
- *
- * @tparam
- */
-template <>
-class ExpMapKey<std::string> {
- public:
-  static uint64_t getKey(const std::string& k) { return libzrvan::utils::FastHash::hash64(reinterpret_cast<const uint8_t*>(k.data()), k.size()); }
-};
-//---------------------------------------------------------------------------------------
-/**
  * @brief Thread-safe hash linked list data structure with the expiration capability.
  * Internally it uses an array of ExpSlotList. so it doesn't use  a big lock for access control
  *
@@ -44,7 +22,7 @@ class ExpMapKey<std::string> {
  * @tparam PRELOAD Preloading the hash segments. It will increase the insertion speed in the cost of
  *  higher memory usage
  */
-template <class K, class T, uint32_t SEGCOUNT = 256000, bool EXTEND_LIFE_ON_ACCESS = true, bool PRELOAD = true>
+template <class K, class T, class HASH=utils::FastHash<K>,uint32_t SEGCOUNT = 256000, bool EXTEND_LIFE_ON_ACCESS = true, bool PRELOAD = true>
 class ExpMap {
  public:
   using MatchFunc = std::function<bool(T&)>;
@@ -54,6 +32,7 @@ class ExpMap {
   ExpSlotList<T, EXTEND_LIFE_ON_ACCESS>* segmensts_;
   uint32_t checkIndex_ = 0;
   std::atomic<size_t> count_ = 0;
+  HASH hash_;
 
   //-------------------------------------------------------------------------------------
   inline uint32_t getSegment(uint64_t key) const { return (key % SEGCOUNT); }
@@ -102,7 +81,7 @@ class ExpMap {
    * @return false
    */
   bool add(const K& key, const T& value, uint32_t expTime) {
-    uint64_t keyval = ExpMapKey<K>::getKey(key);
+    uint64_t keyval = hash_(key);
     if (segmensts_[getSegment(keyval)].add(keyval, value, expTime)) {
       count_++;
       return true;
@@ -135,7 +114,7 @@ class ExpMap {
    * @return false
    */
   bool remove(const K& key, MatchFunc func = nullptr) {
-    uint64_t keyval = ExpMapKey<K>::getKey(key);
+    uint64_t keyval = hash_(key);
     if (segmensts_[getSegment(keyval)].remove(keyval, func)) {
       count_--;
       return true;
@@ -152,7 +131,7 @@ class ExpMap {
    * @return false
    */
   bool findR(const K& key, MatchFunc func = nullptr) {
-    uint64_t keyval = ExpMapKey<K>::getKey(key);
+    uint64_t keyval = hash_(key);
     return segmensts_[getSegment(keyval)].findR(keyval, func);
   }
   //-------------------------------------------------------------------------------------
@@ -165,7 +144,7 @@ class ExpMap {
    * @return false
    */
   bool findW(const K& key, MatchFunc func = nullptr) {
-    uint64_t keyval = ExpMapKey<K>::getKey(key);
+    uint64_t keyval = hash_(key);
     return segmensts_[getSegment(keyval)].findW(keyval, func);
   }
   //-------------------------------------------------------------------------------------
