@@ -2,14 +2,14 @@
 Libzervan is a set of header-only c++ POC components developed and customized for high-performance, high-throughput computing. 
 
 ## Dependency
-There is no particular dependency for you using this library (except std c++). for building and running the tests, you need google-test library (gtest) and Cmake
+There is no particular dependency for using this library (except std c++). for building and running the tests, you need google-test library (gtest) and Cmake
 
 ## Operation system and CPU
 
-These components are only tested and developed, and tuned for the Linux environment and Intel CPUs. For other operating systems or other CPU architectures (AMD, for example), the results may differ.
+These components are only tested, developed and tuned for the Linux environment and Intel CPUs. For other operating systems or other CPU architectures (AMD, for example), the results may differ.
 
 ## Build 
-As it is a header-only library, there is not any particular process for building it. In case that you want to run the unit tests, you need to follow the following instructions.
+As it is a header-only library, there is not any particular process for building. In case that you want to run the unit tests, you need to follow the following instructions.
 
     git clone https://github.com/mohsenatigh/libzrvan
     cd libzrvan
@@ -28,7 +28,7 @@ Implementation of core hash algorithm. used to decrease the collision chance in 
 	
     libzrvan::utils::FastHash
 
-Implementation of the Fast hash algorithm. It could be used as a replacement for the std::hash function. In most implementations, std::hash uses MurmurHash. Fast hash is a competitor algorithm that pos better performance. please note that for std based data structures, using this hash algorithm is not recommended.
+Implementation of the Fast hash algorithm. It could be used as a replacement for the std::hash function. In most implementations, std::hash uses MurmurHash. Fast hash is a competitor algorithm that pos better performance in some situations. please note that for std based data structures, using this hash algorithm is not recommended.
 
 ![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/FastHash.png)
 
