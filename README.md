@@ -52,7 +52,7 @@ The following graph compares the performance of per-thread counters with atomic 
 
     libzrvan::utils::SpinLock
 
-Simple spinlock implementation using std::atomic. in low contention situations this lock act as a simple spinlock but in highly contention systems it acts as a sleeping mutex. When it is acting as a sleeping mutex the performance is highly dependent on the OS scheduling algorithm and timer
+Simple spinlock implementation. in low contention situations this lock act as a simple spinlock but in highly contention systems it acts as a sleeping mutex. When it is acting as a sleeping mutex the performance is highly dependent on the OS scheduling algorithm and timer
 
 The following chart compares the performance of the common synchronization mechanism used in Linux with libzrvan::utils::SpinLock
 
