@@ -1,23 +1,24 @@
 #pragma once
 
-#include <immintrin.h>
 #include <atomic>
 #include <cstdint>
+#include <immintrin.h>
 namespace libzrvan {
 namespace utils {
 
 /**
- * @brief Simple spinlock implementation using std::atomic. in low contention situations this lock act as a simple spinlock but in highly contention
- * systems it acts as a sleeping mutex . When it is acting as a sleeping mutex the performance is highly dependent to the OS scheduling algorithm and timer
+ * @brief Simple spinlock implementation using std::atomic. in low contention
+ * situations this lock act as a simple spinlock but in highly contention
+ * systems it acts as a sleeping mutex. When it is acting as a sleeping mutex
+ * the performance is highly dependent on the OS scheduling algorithm and timer
  *
  * @tparam MaxLoopBeforeSleep
  */
-template <uint32_t MaxLoopBeforeSleep = 10>
-class SpinLock {
- private:
+template <uint32_t MaxLoopBeforeSleep = 10> class SpinLock {
+private:
   std::atomic<bool> lock_ = {false};
   //-------------------------------------------------------------------------------------
-  inline void pause(uint32_t& counter) {
+  inline void pause(uint32_t &counter) {
     _mm_pause();
     if (MaxLoopBeforeSleep && ++counter > MaxLoopBeforeSleep) {
       timespec t;
@@ -29,7 +30,7 @@ class SpinLock {
     }
   }
   //-------------------------------------------------------------------------------------
- public:
+public:
   /**
    * @brief lock the spinlock
    *
@@ -73,6 +74,6 @@ class SpinLock {
    */
   bool locked() { return lock_.load(std::memory_order_relaxed); }
 
-};  // namespace utils
-}  // namespace utils
-}  // namespace libzrvan
+}; // namespace utils
+} // namespace utils
+} // namespace libzrvan

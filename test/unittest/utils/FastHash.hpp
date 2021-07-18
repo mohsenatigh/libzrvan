@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <xxhash.h>
 //---------------------------------------------------------------------------------------
 
 template <class HASH> void testWithHash(const std::string &input) {
@@ -43,13 +44,25 @@ template <class HASH> void testAllStrings() {
     testWithHash<HASH>(a);
   }
 }
-
 //---------------------------------------------------------------------------------------
-TEST(utils, fasthash_test_performance64) {
+//xxx hash wraper
+class XxxHashWraper {
+  public:
+    size_t operator()(const std::string& in){
+      XXH64_hash_t hash = XXH64(in.data(), in.size(), 0xcbf29ce484222325);
+      return static_cast<size_t>(hash); 
+    }
+};
+//---------------------------------------------------------------------------------------
+TEST(utils, hash_xxx_test_performance64) {
+  testAllStrings<XxxHashWraper>();
+}
+//---------------------------------------------------------------------------------------
+TEST(utils, hash_fasthash_test_performance64) {
   testAllStrings<libzrvan::utils::FastHash<std::string>>();
 }
 //---------------------------------------------------------------------------------------
-TEST(utils, stdhash_test_performance) {
+TEST(utils, hash_stdhash_test_performance) {
   testAllStrings<std::hash<std::string>>();
 }
 //---------------------------------------------------------------------------------------
