@@ -57,3 +57,9 @@ Simple spinlock implementation. in low contention situations this lock act as a 
 The following chart compares the performance of the common synchronization mechanism used in Linux with libzrvan::utils::SpinLock
 
 ![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/Lock.png)
+
+    libzrvan::utils::RWSpinLock
+
+Simple RWspinlock implementation. in low contention situations this lock act as a simple spinlock but in highly contention
+systems it acts as a sleeping mutex. When it is acting as a sleeping mutex the performance is highly dependent on the OS scheduling algorithm and timer. It also
+supports Strong-writer mechanisms. It means we can prioritize writer threads over readers.

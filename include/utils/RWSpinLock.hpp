@@ -8,8 +8,8 @@ namespace libzrvan {
 namespace utils {
 
 /**
- * @brief Simple RWspinlock implementation using std::atomic. in low contention situations this lock act as a simple spinlock but in highly contention
- * systems it acts as a mutex . When it is acting as a mutex the performance is highly dependent to the OS scheduling algorithm and timer. It also
+ * @brief Simple RWspinlock implementation. in low contention situations this lock act as a simple spinlock but in highly contention
+ * systems it acts as a mutex . When it is acting as a mutex the performance is highly dependent on the OS scheduling algorithm and timer. It also
  * supports Strong-writer mechanisms. It means we can prioritize writer threads over readers
  *
  * @tparam MaxLoopBeforeSleep

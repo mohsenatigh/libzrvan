@@ -80,6 +80,8 @@ template <typename LOCKTYPE> void testRWLockThreads(uint32_t threadCount) {
   std::vector<std::thread> threads;
   LOCKTYPE lock;
 
+  auto start = std::chrono::high_resolution_clock::now();
+
   // read thread
   auto threadR = [&]() {
     uint32_t val = 0;
@@ -115,25 +117,37 @@ template <typename LOCKTYPE> void testRWLockThreads(uint32_t threadCount) {
     t.join();
   }
 
+  auto end = std::chrono::high_resolution_clock::now();
+
+  std::cout << threadCount << ","
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     start)
+                   .count()
+            << std::endl;
+
   EXPECT_EQ(counter, target);
 }
 //---------------------------------------------------------------------------------------
-const static auto lockThreads_ = {1, 2, 4, 8, 12, 16, 32, 64};
-
 template <typename LOCKTYPE> void testWriteLock() {
-  for (auto i : lockThreads_) {
+  const static auto lockThreads = {1, 2, 4, 8, 12, 16, 32, 64};
+  for (auto i : lockThreads) {
     testWriteLockThreads<LOCKTYPE>(i);
   }
 }
 //---------------------------------------------------------------------------------------
 template <typename LOCKTYPE> void testRWLock() {
-  for (auto i : lockThreads_) {
+  const static auto lockThreads = {1, 2};
+  for (auto i : lockThreads) {
     testRWLockThreads<LOCKTYPE>(i);
   }
 }
 //---------------------------------------------------------------------------------------
-TEST(utils, rwlock_test_read_write_performance_rw_spin_lock) {
+TEST(utils, rwlock_test_read_write_performance_rw_spin_lock_strong_write) {
   testRWLock<libzrvan::utils::RWSpinLock<>>();
+}
+//---------------------------------------------------------------------------------------
+TEST(utils, rwlock_test_read_write_performance_rw_spin_lock_strong_read) {
+  testRWLock<libzrvan::utils::RWSpinLock<10, false>>();
 }
 //---------------------------------------------------------------------------------------
 TEST(utils, rwlock_test_write_performance_std_shared_mutex) {
@@ -142,6 +156,10 @@ TEST(utils, rwlock_test_write_performance_std_shared_mutex) {
 //---------------------------------------------------------------------------------------
 TEST(utils, wlock_test_write_performance_std_mutex) {
   testWriteLock<std::mutex>();
+}
+//---------------------------------------------------------------------------------------
+TEST(utils, wlock_test_write_performance_std_share_mutex) {
+  testWriteLock<std::shared_mutex>();
 }
 //---------------------------------------------------------------------------------------
 struct pthreadMutexWraper {
