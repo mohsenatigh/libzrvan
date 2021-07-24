@@ -1,14 +1,14 @@
 #pragma once
-#include <gtest/gtest.h>
+#include "../../../include/ds/ExpMap.hpp"
+#include "../../../include/ds/ExpSlotList.hpp"
 #include <chrono>
 #include <deque>
 #include <functional>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <list>
 #include <shared_mutex>
 #include <vector>
-#include "../../../include/ds/ExpSlotList.hpp"
-#include "../../../include/ds/ExpMap.hpp"
 //---------------------------------------------------------------------------------------
 struct testObject {
   uint64_t p1;
@@ -17,7 +17,7 @@ struct testObject {
   std::string p4;
 };
 //---------------------------------------------------------------------------------------
-//functionality test
+// functionality test
 TEST(ds, exp_slot_list_test) {
 
   // check functionality
@@ -29,7 +29,7 @@ TEST(ds, exp_slot_list_test) {
   // simple functionality test
   auto add = [&]() {
     for (uint64_t i = 0; i < testCount; i++) {
-      t.p1=i;
+      t.p1 = i;
       EXPECT_EQ(slotList.add(i, t, 10), true);
     }
   };
@@ -37,7 +37,9 @@ TEST(ds, exp_slot_list_test) {
   add();
 
   for (uint64_t i = 0; i < testCount; i++) {
-    EXPECT_EQ(slotList.findR(i,[&](testObject& obj) -> bool{return obj.p1==i;}), true);
+    EXPECT_EQ(
+        slotList.findR(i, [&](testObject &obj) -> bool { return obj.p1 == i; }),
+        true);
     EXPECT_EQ(slotList.findW(i), true);
   }
 
@@ -78,35 +80,41 @@ TEST(ds, exp_slot_list_test) {
   // expire check
 
   add();
-  EXPECT_EQ(slotList.expireCheck(libzrvan::utils::Time::getTime() + 11), testCount);
+  EXPECT_EQ(slotList.expireCheck(libzrvan::utils::Time::getTime() + 11),
+            testCount);
   EXPECT_EQ(slotList.size(), 0);
   EXPECT_EQ(slotList.forEach(nullptr), 0);
 
-  //check move 
+  // check move
   add();
-  libzrvan::ds::ExpSlotList<testObject> temp=std::move(slotList);
-  EXPECT_EQ(temp.forEach(nullptr),testCount);
-  EXPECT_EQ(temp.size(),testCount);
+  libzrvan::ds::ExpSlotList<testObject> temp = std::move(slotList);
+  EXPECT_EQ(temp.forEach(nullptr), testCount);
+  EXPECT_EQ(temp.size(), testCount);
 
-  EXPECT_EQ(slotList.forEach(nullptr),0);
-  EXPECT_EQ(slotList.size(),0);
+  EXPECT_EQ(slotList.forEach(nullptr), 0);
+  EXPECT_EQ(slotList.size(), 0);
 }
 
 //---------------------------------------------------------------------------------------
-static void runTest(const std::string& info, std::function<void()> func) {
+static void runTest(const std::string &info, std::function<void()> func) {
   auto start = std::chrono::high_resolution_clock::now();
   func();
   auto end = std::chrono::high_resolution_clock::now();
-  std::cout << info << " duration is " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
+  std::cout << info << " duration is "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     start)
+                   .count()
+            << std::endl;
 }
 //---------------------------------------------------------------------------------------
-//performance test boundle
+// performance test boundle
 static constexpr uint32_t testCount_ = 1000000;
 static constexpr uint32_t searchCount_ = 100;
 static constexpr uint32_t removeCount_ = 100;
-TEST(ds, exp_list_fill_sample_list) {
-  libzrvan::ds::ExpSlotList<testObject> slotList;
 
+template <class T> static void runExpTest() {
+  
+  T slotList;
   // add func
   auto addFun = [&]() {
     for (uint64_t i = 0; i < testCount_; i++) {
@@ -129,20 +137,22 @@ TEST(ds, exp_list_fill_sample_list) {
   auto removeFun = [&]() {
     uint32_t rCount = 0;
     for (uint64_t i = 0; i < removeCount_; i++) {
-      if (slotList.remove(i+100)) {
+      if (slotList.remove(i + 100)) {
         rCount++;
       }
     }
     std::cout << rCount << std::endl;
   };
-
   runTest("add test", addFun);
   runTest("find test", findFun);
   runTest("remove test", removeFun);
 }
+
+TEST(ds, exp_list_fill_sample_list) {
+  runExpTest<libzrvan::ds::ExpSlotList<testObject>>();
+}
 //---------------------------------------------------------------------------------------
-template <class T>
-void runTest(const std::string& testType) {
+template <class T> void runTest(const std::string &testType) {
   std::shared_mutex lock;
   T slotList;
 
@@ -161,7 +171,7 @@ void runTest(const std::string& testType) {
   auto findFun = [&]() {
     for (uint64_t i = 0; i < searchCount_; i++) {
       lock.lock_shared();
-      for (auto& i : slotList) {
+      for (auto &i : slotList) {
         if (i.p1 == testCount_ + 1) {
           printf("found");
         }
@@ -170,13 +180,13 @@ void runTest(const std::string& testType) {
     }
   };
 
-  //remove function
+  // remove function
   auto removeFun = [&]() {
-    uint32_t count=0;
+    uint32_t count = 0;
     for (uint64_t i = 0; i < removeCount_; i++) {
       lock.lock();
-      for (auto it = slotList.begin();it!=slotList.end();++it) {
-        if (it->p1 == i+100) {
+      for (auto it = slotList.begin(); it != slotList.end(); ++it) {
+        if (it->p1 == i + 100) {
           slotList.erase(it);
           count++;
           break;

@@ -63,3 +63,29 @@ The following chart compares the performance of the common synchronization mecha
 Simple RWspinlock implementation. in low contention situations this lock act as a simple spinlock but in highly contention
 systems it acts as a sleeping mutex. When it is acting as a sleeping mutex the performance is highly dependent on the OS scheduling algorithm and timer. It also
 supports Strong-writer mechanisms. It means we can prioritize writer threads over readers.
+
+### Data structure
+
+    libzrvan::ds::ExpSlotList
+
+Thread-safe slot-link list with expiration capability. like many other tools in
+this library, it uses high memory to increase performance. It uses 2 separate lists,
+one for storing the key elements and another list for storing actual objects. using this
+technique will cause a constant list traversal and search speed without dependency on the
+object size.
+
+- It is possible to have a duplicate key in one list
+
+- To prevent race conditions and object escape, it is important to access the objects in  the callback functions and don't keep a reference to a the stored objects
+
+- This list support TTL (time to live) It means it is possible to remove objects after a defined interval from the last access
+
+- if EXTEND_LIFE_ON_ACCESS equal true the DS extend the lifetime of the object after each access by the defined interval
+
+- The expireCheck routine could be called from another thread
+
+To estimate the performance of this library, the following are the comparison results of ExpSlotList with other common std data structures. for more detailed information, please refer to the related unit test. Please note that these test results are just for reference because ExpSlotList was designed for a completely different purpose.
+
+![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/ExpListInsert.png)
+![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/ExpListSearch.png)
+
