@@ -78,17 +78,24 @@ technique will cause a constant list traversal and search without dependency on 
 actuall objects size.
 
 - It is possible to have a duplicate key in one list
-
-- To prevent race conditions and object escape, it is important to access the objects in  the callback functions and don't keep a reference to a the stored objects
-
+- To prevent race conditions and object escape, it is important to access the objects in  the callback functions and don't keep a reference to the stored objects
 - This list support TTL (time to live) It means it is possible to remove objects after a defined interval from the last access
-
 - if EXTEND_LIFE_ON_ACCESS equal true the DS extend the lifetime of the object after each access by the defined interval
-
 - The expireCheck routine could be called from another thread
 
 To estimate the performance of this library, the following are the comparison results of ExpSlotList with other common std data structures. for more detailed information, please refer to the related unit tests. Please note that these test results are just for reference, because ExpSlotList was designed for a completely different purpose.
 
 ![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/ExpListInsert.png)
 ![alt text](https://github.com/mohsenatigh/libzrvan/blob/main/charts/ExpListSearch.png)
+
+    libzrvan::ds::ExpMap
+
+Thread-safe hash linked list data structure with the expiration capability. Internally it uses an array of ExpSlotList. so it doesn't use  a big lock for access control
+
+- It is possible to have a duplicate key in one list
+- To prevent race conditions and object escape, it is important to access the objects in  the callback functions and don't keep a reference to the stored objects
+- This list support TTL (time to live) It means it is possible to remove objects after a defined interval from the last access
+- if EXTEND_LIFE_ON_ACCESS equal true the DS extend the lifetime of the object after each access by the defined interval
+- The expireCheck routine could be called from another thread
+- It supports preloading, to increase insertion speed (in exchange for more memory usage)
 

@@ -96,7 +96,7 @@ static void runMapTest(const std::string &info,
   auto end = std::chrono::high_resolution_clock::now();
 
   std::cout << info << " thread count " << tCount << " duration is "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      start)
                    .count()
             << std::endl;
@@ -173,8 +173,6 @@ void testExpList(const std::string &comment) {
 //---------------------------------------------------------------------------------------
 TEST(ds, exp_map_test_performance) {
 #define __TEST_EXP_MAP_WITH_T(TCOUNT)                                          \
-  testExpList<uint64_t, TCOUNT, std::hash<uint64_t>>("uint64-stdhash");        \
-  testExpList<std::string, TCOUNT, std::hash<std::string>>("string-stdhash");  \
   testExpList<uint64_t, TCOUNT, libzrvan::utils::FastHash<uint64_t>>(          \
       "uint64-fasthash");                                                      \
   testExpList<std::string, TCOUNT, libzrvan::utils::FastHash<std::string>>(    \
@@ -263,6 +261,7 @@ TEST(ds, exp_map_test_unordered_map_performance) {
   __TEST_MAP_WITH_T(1)
   __TEST_MAP_WITH_T(2)
   __TEST_MAP_WITH_T(4)
+  __TEST_MAP_WITH_T(8)
   __TEST_MAP_WITH_T(12)
 
 #undef __TEST_MAP_WITH_T

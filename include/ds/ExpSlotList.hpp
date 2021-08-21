@@ -26,7 +26,7 @@ namespace ds {
  * if EXTEND_LIFE_ON_ACCESS equal true the DS extend the lifetime of the object after each access
  * by the defined interval
  */
-template <class T, bool EXTEND_LIFE_ON_ACCESS = true>
+template <class T, bool EXTEND_LIFE_ON_ACCESS = true,class LOCK=libzrvan::utils::RWSpinLock<>>
 class ExpSlotList {
  public:
   /**
@@ -280,7 +280,7 @@ class ExpSlotList {
   };
 
  private:
-  libzrvan::utils::RWSpinLock<> lock_;
+  LOCK lock_;
   ExpSlotList::Slot* root_ = nullptr;
   size_t count_ = 0;
   //------------------------------------------------------------------------------------

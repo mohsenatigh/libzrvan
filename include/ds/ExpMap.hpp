@@ -1,35 +1,39 @@
 #pragma once
 
-#include <cstdint>
 #include "../utils/CoreHash.hpp"
 #include "../utils/FastHash.hpp"
 #include "../utils/Time.hpp"
 #include "ExpSlotList.hpp"
+#include <cstdint>
 
 namespace libzrvan {
 namespace ds {
 
 //---------------------------------------------------------------------------------------
 /**
- * @brief Thread-safe hash linked list data structure with the expiration capability.
- * Internally it uses an array of ExpSlotList. so it doesn't use  a big lock for access control
+ * @brief Thread-safe hash linked list data structure with the expiration
+ * capability. Internally it uses an array of ExpSlotList. so it doesn't use  a
+ * big lock for access control
  *
  * @tparam K  key type class
  * @tparam T
  * @tparam SEGCOUNT hash segment count
- * @tparam EXTEND_LIFE_ON_ACCESS considering the expiration time after the last access instead of an
- * absolute value
- * @tparam PRELOAD Preloading the hash segments. It will increase the insertion speed in the cost of
- *  higher memory usage
+ * @tparam EXTEND_LIFE_ON_ACCESS considering the expiration time after the last
+ * access instead of an absolute value
+ * @tparam PRELOAD Preloading the hash segments. It will increase the insertion
+ * speed in the cost of higher memory usage
  */
-template <class K, class T, class HASH=utils::FastHash<K>,uint32_t SEGCOUNT = 256000, bool EXTEND_LIFE_ON_ACCESS = true, bool PRELOAD = true>
+template <class K, class T, class HASH = utils::FastHash<K>,
+          uint32_t SEGCOUNT = 256000, bool EXTEND_LIFE_ON_ACCESS = true,
+          bool PRELOAD = true,
+          class LOCK=libzrvan::utils::RWSpinLock<>>
 class ExpMap {
- public:
-  using MatchFunc = std::function<bool(T&)>;
+public:
+  using MatchFunc = std::function<bool(T &)>;
 
- private:
+private:
   // hash segments
-  ExpSlotList<T, EXTEND_LIFE_ON_ACCESS>* segmensts_;
+  ExpSlotList<T, EXTEND_LIFE_ON_ACCESS,LOCK> *segmensts_;
   uint32_t checkIndex_ = 0;
   std::atomic<size_t> count_ = 0;
   HASH hash_;
@@ -37,7 +41,7 @@ class ExpMap {
   //-------------------------------------------------------------------------------------
   inline uint32_t getSegment(uint64_t key) const { return (key % SEGCOUNT); }
 
- public:
+public:
   //-------------------------------------------------------------------------------------
   /**
    * @brief Construct a new Exp Map objects
@@ -61,8 +65,8 @@ class ExpMap {
    * @brief Disable copy and move constructor
    *
    */
-  ExpMap(const ExpMap&) = delete;
-  ExpMap(ExpMap&& obj) = delete;
+  ExpMap(const ExpMap &) = delete;
+  ExpMap(ExpMap &&obj) = delete;
 
   //-------------------------------------------------------------------------------------
   /**
@@ -80,7 +84,7 @@ class ExpMap {
    * @return true
    * @return false
    */
-  bool add(const K& key, const T& value, uint32_t expTime) {
+  bool add(const K &key, const T &value, uint32_t expTime) {
     uint64_t keyval = hash_(key);
     if (segmensts_[getSegment(keyval)].add(keyval, value, expTime)) {
       count_++;
@@ -100,7 +104,8 @@ class ExpMap {
    * @return true
    * @return false
    */
-  bool addAndCheck(const K& key, const T& value, uint32_t expTime, MatchFunc func = nullptr) {
+  bool addAndCheck(const K &key, const T &value, uint32_t expTime,
+                   MatchFunc func = nullptr) {
     expireCheck(0, func);
     return add(key, value, expTime);
   }
@@ -113,7 +118,7 @@ class ExpMap {
    * @return true
    * @return false
    */
-  bool remove(const K& key, MatchFunc func = nullptr) {
+  bool remove(const K &key, MatchFunc func = nullptr) {
     uint64_t keyval = hash_(key);
     if (segmensts_[getSegment(keyval)].remove(keyval, func)) {
       count_--;
@@ -130,7 +135,7 @@ class ExpMap {
    * @return true
    * @return false
    */
-  bool findR(const K& key, MatchFunc func = nullptr) {
+  bool findR(const K &key, MatchFunc func = nullptr) {
     uint64_t keyval = hash_(key);
     return segmensts_[getSegment(keyval)].findR(keyval, func);
   }
@@ -143,7 +148,7 @@ class ExpMap {
    * @return true
    * @return false
    */
-  bool findW(const K& key, MatchFunc func = nullptr) {
+  bool findW(const K &key, MatchFunc func = nullptr) {
     uint64_t keyval = hash_(key);
     return segmensts_[getSegment(keyval)].findW(keyval, func);
   }
@@ -209,5 +214,5 @@ class ExpMap {
    */
   constexpr size_t size() const { return count_; }
 };
-}  // namespace ds
-}  // namespace libzrvan
+} // namespace ds
+} // namespace libzrvan
